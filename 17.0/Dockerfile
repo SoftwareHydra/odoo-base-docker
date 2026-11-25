@@ -52,17 +52,14 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* wkhtmltox.deb
 
 # install latest postgresql-client
-RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
-    && GNUPGHOME="$(mktemp -d)" \
-    && export GNUPGHOME \
-    && repokey='B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8' \
-    && gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "${repokey}" \
-    && gpg --batch --armor --export "${repokey}" > /etc/apt/trusted.gpg.d/pgdg.gpg.asc \
-    && gpgconf --kill all \
-    && rm -rf "$GNUPGHOME" \
-    && apt-get update  \
+RUN curl --fail --silent --show-error --location \
+        https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+        -o /usr/share/keyrings/pgdg.asc \
+    && echo 'deb [signed-by=/usr/share/keyrings/pgdg.asc] https://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
     && apt-get install --no-install-recommends -y postgresql-client \
     && rm -f /etc/apt/sources.list.d/pgdg.list \
+    && rm -f /usr/share/keyrings/pgdg.asc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install rtlcss (on Debian buster)
@@ -74,8 +71,8 @@ RUN apt-get update && \
 
 # Install Odoo
 ENV ODOO_VERSION=17.0
-ARG ODOO_RELEASE=20260908
-ARG ODOO_SHA=57a8df50c37363cce2d3f2e626d1b4e67b53fc11
+ARG ODOO_RELEASE=20261124
+ARG ODOO_SHA=6c58df84ce059961006d910eca57567c305f55b4
 RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/odoo_${ODOO_VERSION}.${ODOO_RELEASE}_all.deb \
     && echo "${ODOO_SHA} odoo.deb" | sha1sum -c - \
     && apt-get update \
